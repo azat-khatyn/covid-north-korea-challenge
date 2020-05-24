@@ -34,12 +34,12 @@ def confirmed_cases_estimation():
                 return ''
 
         # reading nearest countries data and mapping country names
-        k_nearest_neighbors_to_nk = pd.read_csv('nearest_countries_to_nk.csv')
-        k_nearest_neighbors_to_nk_mapped_names = \
-            pd.DataFrame(k_nearest_neighbors_to_nk.apply(lambda row: map_country_name(row), axis=1), columns=['country'])
+        k_nearest_countries = pd.read_csv('nearest_countries.csv')
+        k_nearest_countries_mapped_names = \
+            pd.DataFrame(k_nearest_countries.apply(lambda row: map_country_name(row), axis=1), columns=['country'])
 
         # joining nearest countries DF and covid data DF
-        nearest_countries_on_date_of_prediction = pd.merge(k_nearest_neighbors_to_nk_mapped_names, covid_data_on_date_of_prediction, on='country')
+        nearest_countries_on_date_of_prediction = pd.merge(k_nearest_countries_mapped_names, covid_data_on_date_of_prediction, on='country')
 
         # taking average number of confirmed cases among nearest countries
         confirmed = int(round(nearest_countries_on_date_of_prediction['confirmed'].mean()))
