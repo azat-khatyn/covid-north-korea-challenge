@@ -2,6 +2,7 @@ from flask import Flask
 from flask import request
 from datetime import date, timedelta
 import pandas as pd
+import json
 
 app = Flask(__name__)
 
@@ -21,20 +22,21 @@ def confirmed_cases_estimation():
         if covid_data_on_date_of_prediction.shape[0] == 0:
             return 'No covid data is available yet for the date %s' % date_of_prediction
 
-        countries_mapping = {
-            'Myanmar': 'Burma',
-            'Virgin Islands (U.S.)': '',
-            'Mali': 'Mali',
-            'Kazakhstan': 'Kazakhstan',
-            'Papua New Guinea': 'Papua New Guinea',
-            'Cambodia': 'Cambodia'
-        }
+        # reading country names mappings
+        fh = open('countries_mapping.json', 'r')
+        countries_mapping = json.load(fh)
+        fh.close()
 
-        # reading nearest countries data, mapping country names, and removing those that don't exist in covid data
+        def map_country_name(row):
+            if row['name'] in countries_mapping:
+                return countries_mapping[row['name']]
+            else:
+                return ''
+
+        # reading nearest countries data and mapping country names
         k_nearest_neighbors_to_nk = pd.read_csv('nearest_countries_to_nk.csv')
         k_nearest_neighbors_to_nk_mapped_names = \
-            pd.DataFrame(k_nearest_neighbors_to_nk.apply(lambda row: countries_mapping[row['name']], axis=1), columns=['country'])
-        k_nearest_neighbors_to_nk_mapped_names = k_nearest_neighbors_to_nk_mapped_names[k_nearest_neighbors_to_nk_mapped_names['country'] != '']
+            pd.DataFrame(k_nearest_neighbors_to_nk.apply(lambda row: map_country_name(row), axis=1), columns=['country'])
 
         # joining nearest countries DF and covid data DF
         nearest_countries_on_date_of_prediction = pd.merge(k_nearest_neighbors_to_nk_mapped_names, covid_data_on_date_of_prediction, on='country')
